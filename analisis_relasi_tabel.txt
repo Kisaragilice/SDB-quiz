@@ -1,0 +1,166 @@
+========================================================================
+ANALISIS RELASI TABEL
+Sistem Informasi Penjualan Toko
+Database : penjualan_putra
+Mata Kuliah : Praktikum Sistem Basis Data
+========================================================================
+
+1. APA FUNGSI PRIMARY KEY PADA SETIAP TABEL?
+------------------------------------------------------------------------
+Primary Key adalah kolom yang menjadi identitas unik untuk setiap baris
+(record) di dalam tabel. Fungsi utamanya:
+
+a. Menjamin setiap baris data memiliki identitas yang unik, sehingga
+   tidak ada dua baris dengan nilai Primary Key yang sama.
+b. Mencegah data ganda (duplikasi) karena Primary Key bersifat UNIQUE.
+c. Tidak boleh bernilai NULL, sehingga setiap baris pasti dapat
+   diidentifikasi.
+d. Menjadi acuan (referensi) bagi Foreign Key pada tabel lain, sehingga
+   hubungan antar tabel dapat terbentuk.
+e. Mempermudah proses pencarian, pengurutan, dan pengambilan data
+   karena MySQL otomatis membuat indeks pada kolom Primary Key.
+
+Pada database ini:
+- pelanggan.id_pelanggan adalah Primary Key, sehingga setiap pelanggan
+  hanya memiliki satu nomor identitas.
+- produk.id_produk adalah Primary Key, sehingga setiap produk hanya
+  memiliki satu kode produk.
+- transaksi.id_transaksi adalah Primary Key, sehingga setiap transaksi
+  penjualan memiliki nomor transaksi yang unik dan tidak dapat tertukar.
+
+
+2. APA FUNGSI FOREIGN KEY PADA TABEL TRANSAKSI?
+------------------------------------------------------------------------
+Foreign Key adalah kolom yang nilainya merujuk pada Primary Key di tabel
+lain. Pada tabel transaksi terdapat dua Foreign Key, yaitu:
+
+- id_pelanggan  -> merujuk ke pelanggan.id_pelanggan
+- id_produk     -> merujuk ke produk.id_produk
+
+Fungsi Foreign Key pada tabel transaksi:
+a. Menghubungkan tabel transaksi dengan tabel pelanggan dan tabel produk
+   sehingga data transaksi memiliki keterkaitan dengan data induknya.
+b. Menjaga integritas referensial (referential integrity), yaitu
+   mencegah dimasukkannya transaksi dengan id_pelanggan atau id_produk
+   yang tidak ada di tabel asal.
+c. Mencegah penghapusan data induk yang masih dipakai oleh tabel
+   transaksi, sehingga data tidak menjadi yatim (orphan).
+d. Memastikan bahwa setiap transaksi benar-benar dilakukan oleh
+   pelanggan yang terdaftar dan membeli produk yang tersedia.
+e. Memungkinkan penggabungan data antar tabel menggunakan JOIN dengan
+   tepat dan konsisten.
+
+
+3. MENGAPA TABEL TRANSAKSI MEMBUTUHKAN id_pelanggan DAN id_produk?
+------------------------------------------------------------------------
+Karena tabel transaksi adalah tabel penghubung (junction/penghubung
+relasi many-to-many) yang mencatat kejadian penjualan. Satu transaksi
+harus diketahui: siapa pembelinya dan produk apa yang dibeli.
+
+- id_pelanggan dibutuhkan untuk mengetahui pelanggan mana yang
+  melakukan transaksi tersebut.
+- id_produk dibutuhkan untuk mengetahui produk apa yang dijual atau
+  dibeli dalam transaksi tersebut.
+
+Tanpa kedua kolom ini, tabel transaksi hanya berisi nomor transaksi dan
+tanggal tanpa makna, sehingga tidak dapat diketahui siapa pembeli dan
+barang apa yang dibeli. Selain itu, kedua kolom tersebut juga diperlukan
+sebagai penghubung agar kueri JOIN dapat menampilkan nama pelanggan dan
+nama produk secara lengkap.
+
+Selain itu, tabel transaksi juga menyimpan atribut khusus transaksi
+seperti tanggal_transaksi dan jumlah, yang tidak dapat disimpan di tabel
+pelanggan maupun produk karena bergantung pada kejadian transaksi.
+
+
+4. JELASKAN RELASI ANTARA TABEL PELANGGAN DAN TRANSAKSI
+------------------------------------------------------------------------
+Relasi antara tabel pelanggan dan tabel transaksi adalah relasi
+ONE-TO-MANY (satu ke banyak), dengan arah:
+
+    pelanggan (1) -----< transaksi (N)
+
+Artinya:
+- Satu pelanggan dapat melakukan banyak transaksi.
+- Satu transaksi hanya dilakukan oleh satu pelanggan.
+
+Relasi ini dibentuk oleh:
+    transaksi.id_pelanggan (Foreign Key)
+        -> pelanggan.id_pelanggan (Primary Key)
+
+Contoh pada data:
+- Andi (id_pelanggan = 1) melakukan transaksi nomor 1 dan 3, jadi satu
+  pelanggan memiliki lebih dari satu transaksi.
+- Sebaliknya, transaksi nomor 2 hanya milik Budi (id_pelanggan = 2).
+
+Dengan relasi ini, data pelanggan cukup disimpan satu kali di tabel
+pelanggan, lalu diacu oleh banyak transaksi. Cara ini menghindari
+duplikasi data (normalisasi).
+
+
+5. JELASKAN RELASI ANTARA TABEL PRODUK DAN TRANSAKSI
+------------------------------------------------------------------------
+Relasi antara tabel produk dan tabel transaksi juga merupakan relasi
+ONE-TO-MANY (satu ke banyak), dengan arah:
+
+    produk (1) -----< transaksi (N)
+
+Artinya:
+- Satu produk dapat muncul pada banyak transaksi penjualan.
+- Satu transaksi (dalam desain ini) mencatat satu produk.
+
+Relasi ini dibentuk oleh:
+    transaksi.id_produk (Foreign Key)
+        -> produk.id_produk (Primary Key)
+
+Contoh pada data:
+- Mouse Wireless (id_produk = 101) muncul pada transaksi nomor 1 dan 4,
+  jadi satu produk dapat terjual lebih dari sekali.
+- Transaksi nomor 2 hanya menjual Keyboard (id_produk = 102).
+
+Dengan relasi ini, harga dan stok produk cukup disimpan satu kali di
+tabel produk, sedangkan tabel transaksi hanya menyimpan id_produk dan
+jumlah yang dibeli.
+
+Catatan: Apabila satu transaksi dapat berisi banyak produk sekaligus
+(keranjang belanja), desain dapat dikembangkan dengan tabel detail
+transaksi. Namun sesuai soal, satu baris transaksi mewakili satu
+pelanggan yang membeli satu produk.
+
+
+6. MENGAPA DATA PELANGGAN DAN PRODUK PERLU DIMASUKKAN SEBELUM DATA
+   TRANSAKSI?
+------------------------------------------------------------------------
+Karena tabel transaksi memiliki Foreign Key yang merujuk ke tabel
+pelanggan dan tabel produk. Aturan integritas referensial mengharuskan
+nilai yang dimasukkan ke kolom Foreign Key sudah ada di tabel induknya.
+
+Jika data transaksi dimasukkan lebih dahulu:
+a. MySQL akan menolak INSERT karena id_pelanggan atau id_produk belum
+   ada di tabel induk (error 1452: Cannot add or update a child row:
+   a foreign key constraint fails).
+b. Data transaksi menjadi tidak valid atau yatim (orphan), karena tidak
+   memiliki pelanggan dan produk yang jelas.
+c. Hasil JOIN tidak akan menampilkan data yang lengkap.
+
+Urutan yang benar adalah:
+    1) Membuat tabel induk (pelanggan, produk).
+    2) Mengisi data pelanggan dan produk.
+    3) Baru mengisi tabel transaksi yang mengacu pada keduanya.
+
+Selain itu, saat menghapus data berlaku urutan sebaliknya: hapus dulu
+data transaksi yang terkait, baru data pelanggan/produk, agar tidak
+melanggar Foreign Key.
+
+
+========================================================================
+KESIMPULAN
+------------------------------------------------------------------------
+- Primary Key menjaga keunikan identitas setiap baris pada tabel.
+- Foreign Key menghubungkan tabel transaksi dengan tabel pelanggan dan
+  produk sekaligus menjaga integritas referensial.
+- Relasi pelanggan -> transaksi adalah one-to-many.
+- Relasi produk -> transaksi adalah one-to-many.
+- Data induk (pelanggan dan produk) wajib diisi sebelum data transaksi
+  agar tidak melanggar aturan Foreign Key.
+========================================================================
